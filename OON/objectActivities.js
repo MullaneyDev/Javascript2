@@ -1,3 +1,7 @@
+import chalk from "chalk";
+import { getDefaultResultOrder } from "dns";
+import inquirer from "inquirer";
+
 class CoffeeShop {
   constructor(location) {
     this.location = location;
@@ -5,15 +9,15 @@ class CoffeeShop {
     this.receiptHead =
       "***************************\n*                         *\n*         Receipt         *\n*                         *\n***************************\n";
     this.menu = {
-      Americano: {
+      "Americano": {
         price: 2.5,
         listDisplay: "Americano             £2.50\n",
       },
-      Cappucino: {
+      "Cappucino": {
         price: 3,
         listDisplay: "Cappucino             £3.00\n",
       },
-      Latte: {
+      "Latte": {
         price: 3,
         listDisplay: "Latte                 £3.00\n",
       },
@@ -29,7 +33,7 @@ class CoffeeShop {
         price: 1.5,
         listDisplay: "Toast with jam        £1.50\n",
       },
-      Croissant: {
+      "Croissant": {
         price: 2,
         listDisplay: "Croissant             £2.00\n",
       },
@@ -41,42 +45,134 @@ class CoffeeShop {
   }
 }
 
+
+
 const Oxton = new CoffeeShop("Oxton");
+
+
+let menuChoices = Object.keys(Oxton.menu)
+menuChoices.push("-- Go To Checkout --")
+// console.log (menuChoices)
+
 
 class Customer extends CoffeeShop {
   constructor(customerName, money) {
     super(Oxton);
     this.customerName = customerName;
     this.money = money;
+    this.order = []
+    this.total = 0
   }
 
-  order(order) {
-    let total = 0;
+  orderItems(orderItems) {
+    let totalCost = 0;
     let orderString = "";
-    order.forEach((order) => {
-      let price = this.menu[order].price;
-      total += price;
-      orderString += this.menu[order].listDisplay;
+    orderItems.forEach((orderItems) => {
+      let price = this.menu[orderItems].price;
+      totalCost += price;
+      orderString += this.menu[orderItems].listDisplay;
     });
-    if (total > this.money) {
-      console.log(`Sorry ${this.customerName}, you do not have enough money`);
+    if (totalCost > this.money) {
+      console.log(
+        chalk.red(`Sorry ${this.customerName}, you do not have enough money`)
+      );
       return;
     }
     console.log(
-      `${Oxton.receiptHead}\nWelcome to CostBucks ${
-        Oxton.location
-      }.\n\nYour order is :\n${orderString}\nTotal cost =         £${total.toFixed(
-        2
-      )}\n\n   Please visit us again!`
+      chalk.bgWhiteBright(
+        `${this.receiptHead}\nWelcome to CostBucks ${
+          Oxton.location
+        }.\n\nYour order is :\n${orderString}\nTotal cost =         £${totalCost.toFixed(
+          2
+        )}\n\n   Please visit us again!`
+      )
     );
-    this.money -= total;
-    console.log(`\nYou have £${this.money.toFixed(2)} left to spend`);
+    this.money -= totalCost;
+    console.log(
+      chalk.green(
+        `\n${this.customerName}, you have £${this.money.toFixed(
+          2
+        )} left to spend`
+      )
+    );
   }
+
+  calculateTotal() {
+      console.log("");
+      console.log(
+        `Thanks ${nameResponse.getName}, your order is:`
+      );
+      console.log("");
+    for (let orderedItem of this.order) {
+      console.log(`${orderedItem}.....£${this.menu[orderedItem].price.toFixed(2)}`)
+      this.total += this.menu[orderedItem].price
+    }
+    console.log("")
+    console.log(`Your total comes to £${this.total.toFixed(2)}`)
+
+      if (this.total > this.money) {
+        console.log(chalk.red(`Sorry ${nameResponse.getName} you don't appear to have enough money`))
+  } else {
+    let change = (this.money - this.total)
+    console.log("")
+    console.log(`Your change is £${change.toFixed(2)}`)
+    console.log(chalk.green(`Thanks for your order ${nameResponse.getName}, please come again!`))
+  }
+  }
+  set updateOrder (newItem) {
+    this.order.push(newItem)
+  }
+
+
 }
 
 const Matt = new Customer("Matt", 5);
 const Albie = new Customer("Albie", 15);
 
-Matt.order(["Americano", "Cappucino", "Latte"]);
+Matt.orderItems(["Americano", "Cappucino", "Latte"]);
 console.log("");
-Albie.order(["Americano", "Cappucino", "Latte"]);
+
+Albie.orderItems(["Americano", "Cappucino", "Latte"]);
+console.log("")
+
+console.log (chalk.bgCyan("Addition of inquirer"))
+console.log("")
+const questions = [
+  {
+    name: "getName",
+    message: "Hi, Can I take your name?",
+    type: "input",
+  },
+  {
+    name: "getBudget",
+    message: "What is your budget?",
+    type: "number"
+  }
+];
+
+const nameResponse = await inquirer.prompt(questions);
+
+const newCustomer = new Customer(nameResponse.getName, nameResponse.getBudget)
+
+const askForOrder = async () => {
+
+
+  const takeOrder = await inquirer.prompt([
+    {
+    name: "getOrder",
+    message: "What would you like to order?",
+    type: "list",
+    choices: menuChoices
+    }
+  ])
+  if (takeOrder.getOrder === "-- Go To Checkout --") {
+    newCustomer.calculateTotal()
+    return
+  } else {
+    newCustomer.updateOrder = takeOrder.getOrder
+  }
+  askForOrder()
+}
+
+
+askForOrder()
