@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { getDefaultResultOrder } from "dns";
 import inquirer from "inquirer";
 
 class CoffeeShop {
